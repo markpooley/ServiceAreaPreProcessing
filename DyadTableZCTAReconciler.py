@@ -146,11 +146,11 @@ prov_resolved = list(set(prov_resolved))#remove duplicates
 prov_unresolved = list(set(prov_unresolved))#remove duplicates
 
 del prov_ZCTAs_Misssing #don't need the original list anymore
-arcpy.AddMessage("{0} recipient ZCTAs resolved".format(len(rec_resolved)))
-arcpy.AddMessage("{0} unresolved recipient ZCTAs".format(len(rec_unresolved)))
+arcpy.AddMessage("{0} recipient ZCTAs resolved (found in dyad table with corresponding entry in crosswalk)...".format(len(rec_resolved)))
+arcpy.AddMessage("{0} ZCTAs in Dyad table, but not found in crosswalk...".format(len(rec_unresolved)))
 arcpy.AddMessage("resolved provider ZCTAs: {0}".format(prov_resolved))
 arcpy.AddMessage("unresolved provider ZCTAs: {0}".format(prov_unresolved))
-arcpy.AddMessage("{0:.2%} of visits will be unaccounted for...".format(float(Visits_Missed)/float(VisitsTotal)))
+arcpy.AddMessage("{0:.4%} of visits will be unaccounted for...".format(float(Visits_Missed)/float(VisitsTotal)))
 
 ###################################################################################################
 #Check for duplicate entries in the dyayd table, find them, update the visits field accordingly and
@@ -160,11 +160,16 @@ arcpy.SetProgressor("step","Checking duplicate recipient ZCTA entries in dyad ta
 for i in rec_resolved:
 	recQuery = DyadRec_field + " = " + i #query
 	temp_Rec_List = []
+	#-------------------------------------------------------------------------------------------
+	#Look for duplicate entries of the same recipient and provider. This loop appends all the
+	#providers to a list which will be checked for dupilcate entries
+	#-------------------------------------------------------------------------------------------
 	with arcpy.da.SearchCursor(DyadTable,DyadTable_FieldList,recQuery) as cursor:
 		for row in cursor:
 			temp_Rec_List.append(row[provIndex])
 
-	#look in temp list for repeats (count > 1) and create a new list
+	#look in temp list for repeats (count > 1) and create a new list using set to
+	#remove duplicates
 	prov_Repeats = list(set(x for x in temp_Rec_List if temp_Rec_List.count(x) > 1))
 
 	if not prov_Repeats: #if list is empty pass
@@ -193,7 +198,7 @@ for i in rec_resolved:
 	arcpy.SetProgressorPosition()
 
 ###################################################################################################
-#update number of utilizers, visits, max, and dyad_max fields
+#update number of utilizers, visits, max, and dyad_max fields for recipients that have been resolved
 ###################################################################################################
 arcpy.SetProgressor("step","Updating vists, max visits, number of utilizers and max dyad fields for resolved ZCTAs...",0,len(rec_resolved),1)
 for i in rec_resolved:
@@ -203,7 +208,7 @@ for i in rec_resolved:
 	#aggregate visits and find the max number of visits
 	with arcpy.da.SearchCursor(DyadTable,DyadTable_FieldList,recQuery) as cursor:
 		for row in cursor:
-			utilizers += row[DyadTable_FieldList.index(DyadVisits_Field)] #aggregate visits for th enumber of uitlizers
+			utilizers += row[DyadTable_FieldList.index(DyadVisits_Field)] #aggregate visits for the number of uitlizers
 			if row[DyadTable_FieldList.index(DyadVisits_Field)] > maxVisits:
 				maxVisits = row[DyadTable_FieldList.index(DyadVisits_Field)]
 
@@ -215,11 +220,26 @@ for i in rec_resolved:
 			#assign the max accordingly
 			if row[DyadTable_FieldList.index(DyadVisits_Field)] == maxVisits:
 				row[DyadTable_FieldList.index("Dyad_max")] = 1
+				cursor.updateRow(row)
 			else:
 				row[DyadTable_FieldList.index("Dyad_max")] = 0
 			cursor.updateRow(row)
 
 	arcpy.SetProgressorPosition()
+
+####################################################################################################
+#update the Base Zipcodes using the crosswalk
+####################################################################################################
+featureCount = int(arcpy.GetCount_management(ZCTAs).getOutput(0))
+arcpy.SetProgressor('step','updating Base ZCTAs with correct ZCTA assignment',0,featureCount,1)
+with arcpy.da.UpdateCursor(ZCTAs,[ZCTA_field]) as cursor:
+	for row in cursor:
+		try:
+			row[0] = ZipZCTA_Dict[row[0]]
+			cursor.updateRow(row)
+		except KeyError:
+			pass
+		arcpy.SetProgressorPosition()
 
 
 arcpy.AddMessage("Process Complete!")

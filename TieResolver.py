@@ -86,7 +86,6 @@ nbr_ZCTA_field = [f for f in nbrTable_FieldList if 'nbr_' in f][0] #find nbr fie
 ZCTA_field = [f for f in ZCTAs_FieldList if 'ZCTA' in f or 'ZIP' in f][0] #find ZCTA field within field list
 length_Field = [f for f in nbrTable_FieldList if 'LENGTH' in f][0] #find LENGTH field within field list
 
-
 ###################################################################################################
 #read in input CSV and create dictionaries of tied Rec ZCTAs
 ###################################################################################################
@@ -149,14 +148,14 @@ for key,values in tieDict.iteritems():
 arcpy.AddMessage(str(len(resolvedDict)) + " ties resolved by finding martching or adjacent provider ZCTAs..." )
 
 
-#create set of thsoe where neighbor search is needed because provider ZCTAS
+#create set of those where neighbor search is needed because provider ZCTAS
 #aren't adjacent.  Use iteritems to iterate through a dictionary correctly.
 for key,value in resolvedDict.iteritems():
 	if tieDict.has_key(key):
 		#if key is in resolved dictionary, pop identified key from tie dictionary and keep none of the values
 		tieDict.pop(key,None)
 
-arcpy.AddMessage(str(len(tieDict)) + " remaining ties to be resolved...")
+arcpy.AddMessage(str(len(tieDict)) + " remaining ties to be resolved by finding nearest provider ZCTA...")
 
 ###################################################################################################
 #Find best provider match - being the closest provider to the recipient ZCTA based on the
@@ -177,8 +176,10 @@ for key,values in tieDict.iteritems():
 			recX = recCoord[0] #rec lat/X var
 			recY = recCoord[1] #rec lon/Y var
 
+	#-------------------------------------------------------------------------------------------
 	#iterate through provider zctas to find coordinates and pass them through the
 	#distance function.
+	#-------------------------------------------------------------------------------------------
 	for value in values:
 		provQuery = ZCTA_field + " = '" + str(value) + "'" #queary to be used for search cursor
 		with arcpy.da.SearchCursor(ZCTAs,[ZCTA_field,"SHAPE@TRUECENTROID"],provQuery) as cursor:
@@ -231,4 +232,6 @@ for row in reader:
 #close csv files.
 outCSV.close()
 readerFile.close()
+
+
 arcpy.AddMessage("Process complete!\n" + "Output csv location: " + str(os.path.realpath(outFile)))
