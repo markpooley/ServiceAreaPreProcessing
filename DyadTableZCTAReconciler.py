@@ -115,7 +115,7 @@ for i in rec_ZCTAs_Misssing:
 				rec_resolved.append(ZipZCTA_Dict[str(row[recIndex])]) #append the assignment to the resolved list
 				cursor.updateRow(row) #update row
 			else:
-				Visits_Missed += row[DyadTable_FieldList.index("N_kids")]
+				Visits_Missed += row[DyadTable_FieldList.index("VISITS_DYAD")]
 				rec_unresolved.append(i)
 			arcpy.SetProgressorPosition()
 
@@ -215,8 +215,8 @@ for i in rec_resolved:
 	#update the fields
 	with arcpy.da.UpdateCursor(DyadTable,DyadTable_FieldList,recQuery) as cursor:
 		for row in cursor:
-			row[DyadTable_FieldList.index("Max_kids")] = maxVisits
-			row[DyadTable_FieldList.index("Util_0812")] = utilizers
+			row[DyadTable_FieldList.index("MAX_VISITS")] = maxVisits
+			row[DyadTable_FieldList.index("VISITS_DYAD")] = utilizers
 			#assign the max accordingly
 			if row[DyadTable_FieldList.index(DyadVisits_Field)] == maxVisits:
 				row[DyadTable_FieldList.index("Dyad_max")] = 1

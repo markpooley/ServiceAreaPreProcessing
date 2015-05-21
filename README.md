@@ -4,7 +4,7 @@ There are host of scripts/tools to be used in the following order
 
 ##1. Tie Resolver
 
-Takes, as in put, a csv of recipient ZCTAs containing ties for provider ZCTAs. Provider ZCTAs are chosen in the following manner:
+Takes, as input, a csv of recipient ZCTAs containing ties for provider ZCTAs. Provider ZCTAs are chosen in the following manner:
 
 1. If any of the potential provider ZCTAs match the recpient ZCTA then the matching set is chosen.
 

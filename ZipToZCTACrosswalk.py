@@ -89,7 +89,7 @@ arcpy.Delete_management(NationalTable)
 if "ZCTA" not in [f.name for f in arcpy.ListFields(ZipCodes)]: #look for ZCTA field, if not in the fild list, add it
 	arcpy.AddField_management(ZipCodes,"ZCTA","TEXT")
 ZipCodes_FieldList = [f.name for f in arcpy.ListFields(ZipCodes)]
-Zip_Index = ZipCodes_FieldList.index([f for f in ZipCodes_FieldList if "ZIP" in f][0])#pull the index of the Zip field
+Zip_Index = ZipCodes_FieldList.index([f for f in ZipCodes_FieldList if 'zcta' in f.lower()][0])#pull the index of the Zip field
 ZCTA_Index = len(ZipCodes_FieldList) - 1 #ZCTAs was added last, so it's the last entry in the field list
 
 featureCount = int(arcpy.GetCount_management(ZipCodes).getOutput(0)) #get number of features in ZCTAs
